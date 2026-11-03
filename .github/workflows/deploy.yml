@@ -50,6 +50,21 @@ jobs:
       - name: Install sshpass
         run: sudo apt-get install -y sshpass
 
+      - name: Check SSH secrets
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSHPASS: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          for name in SSH_HOST SSH_USER; do
+            value="${!name}"
+            echo "$name: $(printf %s "$value" | sed 's/./& /g')($(printf %s "$value" | wc -c | tr -d ' ') байт)"
+          done
+          echo "SSH_PASSWORD: $(printf %s "$SSHPASS" | wc -c | tr -d ' ') байт"
+          if LC_ALL=C grep -q '[^!-~]' <<<"$SSHPASS"; then
+            echo "SSH_PASSWORD содержит пробелы или не-латинские символы"
+          fi
+
       - name: Deploy to server
         env:
           SSHPASS: ${{ secrets.SSH_PASSWORD }}

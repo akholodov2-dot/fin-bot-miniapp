@@ -47,25 +47,20 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Configure SSH
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
-        run: |
-          install -m 700 -d ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+      - name: Install sshpass
+        run: sudo apt-get install -y sshpass
 
       - name: Deploy to server
         env:
+          SSHPASS: ${{ secrets.SSH_PASSWORD }}
           SSH_TARGET: ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
           GHCR_USER: ${{ github.actor }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          scp deploy/docker-compose.yml "$SSH_TARGET:$DEPLOY_DIR/docker-compose.yml"
-          echo "$GHCR_TOKEN" | ssh "$SSH_TARGET" docker login ghcr.io -u "$GHCR_USER" --password-stdin
-          ssh "$SSH_TARGET" bash -s <<EOF
+          SSH_OPTS="-o StrictHostKeyChecking=accept-new"
+          sshpass -e scp $SSH_OPTS deploy/docker-compose.yml "$SSH_TARGET:$DEPLOY_DIR/docker-compose.yml"
+          echo "$GHCR_TOKEN" | sshpass -e ssh $SSH_OPTS "$SSH_TARGET" docker login ghcr.io -u "$GHCR_USER" --password-stdin
+          sshpass -e ssh $SSH_OPTS "$SSH_TARGET" bash -s <<EOF
           set -e
           cd $DEPLOY_DIR
           echo "FINBOT_IMAGE=$IMAGE" > .env

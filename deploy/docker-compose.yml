@@ -1,0 +1,28 @@
+services:
+  finbot:
+    image: ${FINBOT_IMAGE:?FINBOT_IMAGE is not set}
+    container_name: finbot-miniapp
+    restart: unless-stopped
+
+    environment:
+      - TZ=Asia/Tokyo
+
+    volumes:
+      - ./configs/config.yaml:/app/configs/config.yaml:ro
+      - ./data:/app/data
+      - ./logs:/app/logs
+
+    ports:
+      - "127.0.0.1:8080:8080"
+
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "13"

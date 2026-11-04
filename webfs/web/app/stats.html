@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Statistics</title>
+  <title>Статистика</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
@@ -42,64 +42,64 @@
   </style>
 </head>
 <body>
-  <h2>Statistics</h2>
+  <h2>Статистика</h2>
   <div id="error"></div>
 
-  <label>Ledger</label>
+  <label>Счёт</label>
   <select id="ledger">
-    <option value="0">All Ledgers</option>
+    <option value="0">Все счета</option>
   </select>
 
-  <label>Date Range</label>
+  <label>Период</label>
   <div class="quick-btns">
-    <button class="quick-btn" onclick="setThisMonth()">This Month</button>
-    <button class="quick-btn" onclick="setThisYear()">This Year</button>
+    <button class="quick-btn" onclick="setThisMonth()">Этот месяц</button>
+    <button class="quick-btn" onclick="setThisYear()">Этот год</button>
   </div>
-  <label>Start</label>
+  <label>С</label>
   <input type="date" id="start">
-  <label>End</label>
+  <label>По</label>
   <input type="date" id="end">
 
-  <button class="primary" onclick="load()">View Stats</button>
+  <button class="primary" onclick="load()">Показать</button>
 
   <div id="result">
     <div class="summary-cards">
       <div class="card">
-        <div class="card-label">Income</div>
+        <div class="card-label">Доходы</div>
         <div class="card-value income" id="r-income">—</div>
       </div>
       <div class="card">
-        <div class="card-label">Expense</div>
+        <div class="card-label">Расходы</div>
         <div class="card-value expense" id="r-expense">—</div>
       </div>
       <div class="card">
-        <div class="card-label">Net</div>
+        <div class="card-label">Итог</div>
         <div class="card-value" id="r-net">—</div>
       </div>
     </div>
 
     <div class="chart-section" id="section-cat">
-      <div class="chart-title">Expenses by Category</div>
+      <div class="chart-title">Расходы по категориям</div>
       <div class="chart-wrap">
         <canvas id="chart-cat"></canvas>
         <div class="chart-center">
-          <div class="chart-center-label" id="cat-center-label">Total</div>
+          <div class="chart-center-label" id="cat-center-label">Всего</div>
           <div class="chart-center-value" id="cat-center-value">—</div>
         </div>
       </div>
-      <div class="tooltip-box" id="cat-tooltip">Tap a slice to see details</div>
+      <div class="tooltip-box" id="cat-tooltip">Нажмите на сектор, чтобы увидеть детали</div>
     </div>
 
     <div class="chart-section" id="section-ledger">
-      <div class="chart-title">Expenses by Ledger</div>
+      <div class="chart-title">Расходы по счетам</div>
       <div class="chart-wrap">
         <canvas id="chart-ledger"></canvas>
         <div class="chart-center">
-          <div class="chart-center-label" id="ledger-center-label">Total</div>
+          <div class="chart-center-label" id="ledger-center-label">Всего</div>
           <div class="chart-center-value" id="ledger-center-value">—</div>
         </div>
       </div>
-      <div class="tooltip-box" id="ledger-tooltip">Tap a slice to see details</div>
+      <div class="tooltip-box" id="ledger-tooltip">Нажмите на сектор, чтобы увидеть детали</div>
     </div>
   </div>
 
@@ -107,10 +107,17 @@
   <script>
     let chartCat = null;
     let chartLedger = null;
+    let categoryName = {};
     const COLORS = ["#2481cc","#27ae60","#e74c3c","#f39c12","#9b59b6","#1abc9c","#e67e22","#34495e","#e91e63","#00bcd4"];
 
     async function init() {
-      const res = await apiFetch("/api/ledgers");
+      const [res, catsRes] = await Promise.all([
+        apiFetch("/api/ledgers"),
+        apiFetch("/api/categories"),
+      ]);
+      if (catsRes.ok) {
+        (await catsRes.json()).forEach(c => { categoryName[c.code] = c.emoji + " " + c.name; });
+      }
       if (!res.ok) return;
       const ledgers = await res.json();
       const sel = document.getElementById("ledger");
@@ -140,10 +147,10 @@
       const ledgerID = document.getElementById("ledger").value;
       const start = document.getElementById("start").value;
       const end = document.getElementById("end").value;
-      if (!start || !end) { showError("Select a date range."); return; }
+      if (!start || !end) { showError("Выберите период."); return; }
 
       const res = await apiFetch(`/api/stats?ledger_id=${ledgerID}&start=${start}&end=${end}`);
-      if (!res.ok) { showError("Failed to load stats."); return; }
+      if (!res.ok) { showError("Не удалось загрузить статистику."); return; }
       const data = await res.json();
 
       const cur = data.base_currency;
@@ -153,7 +160,7 @@
       netEl.textContent = fmt(data.net, cur);
       netEl.className = "card-value " + (data.net >= 0 ? "net-pos" : "net-neg");
 
-      renderChart("cat", data.by_category || [], d => d.category, data.total_expense, cur);
+      renderChart("cat", data.by_category || [], d => categoryName[d.category] || d.category, data.total_expense, cur);
       renderChart("ledger", data.by_ledger || [], d => d.ledger_name, data.total_expense, cur);
 
       document.getElementById("result").style.display = "block";
@@ -171,15 +178,15 @@
       const tooltip = document.getElementById(key + "-tooltip");
 
       centerValue.textContent = fmt(total, cur);
-      centerLabel.textContent = "Total";
-      tooltip.innerHTML = "Tap a slice to see details";
+      centerLabel.textContent = "Всего";
+      tooltip.innerHTML = "Нажмите на сектор, чтобы увидеть детали";
 
       if (chartCat && key === "cat") { chartCat.destroy(); chartCat = null; }
       if (chartLedger && key === "ledger") { chartLedger.destroy(); chartLedger = null; }
 
       if (!items.length) {
         canvas.style.display = "none";
-        tooltip.textContent = "No data";
+        tooltip.textContent = "Нет данных";
         return;
       }
       canvas.style.display = "block";
@@ -202,8 +209,8 @@
           onClick(_, elements) {
             if (!elements.length) {
               centerValue.textContent = fmt(total, cur);
-              centerLabel.textContent = "Total";
-              tooltip.innerHTML = "Tap a slice to see details";
+              centerLabel.textContent = "Всего";
+              tooltip.innerHTML = "Нажмите на сектор, чтобы увидеть детали";
               return;
             }
             const idx = elements[0].index;

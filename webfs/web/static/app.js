@@ -15,7 +15,7 @@ async function apiFetch(path, options = {}) {
     });
     return res;
   } catch (e) {
-    showError("Network error. Please try again.");
+    showError("Ошибка сети. Попробуйте ещё раз.");
     return { ok: false };
   }
 }

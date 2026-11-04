@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Undo</title>
+  <title>Отмена записи</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     body { font-family: sans-serif; padding: 16px; background: var(--tg-theme-bg-color, #fff); color: var(--tg-theme-text-color, #000); }
@@ -20,23 +20,23 @@
   </style>
 </head>
 <body>
-  <h2>Undo Last Record</h2>
+  <h2>Отмена последней записи</h2>
   <div id="error"></div>
-  <div id="loading">Loading...</div>
+  <div id="loading">Загрузка...</div>
 
   <div id="content" style="display:none">
     <div class="card">
-      <div class="row"><span class="label">Date</span><span id="r-date"></span></div>
-      <div class="row"><span class="label">Ledger</span><span id="r-ledger"></span></div>
-      <div class="row"><span class="label">Type</span><span id="r-type"></span></div>
-      <div class="row"><span class="label">Category</span><span id="r-category"></span></div>
-      <div class="row"><span class="label">Amount</span><span id="r-amount"></span></div>
-      <div class="row"><span class="label">Description</span><span id="r-desc"></span></div>
+      <div class="row"><span class="label">Дата</span><span id="r-date"></span></div>
+      <div class="row"><span class="label">Счёт</span><span id="r-ledger"></span></div>
+      <div class="row"><span class="label">Тип</span><span id="r-type"></span></div>
+      <div class="row"><span class="label">Категория</span><span id="r-category"></span></div>
+      <div class="row"><span class="label">Сумма</span><span id="r-amount"></span></div>
+      <div class="row"><span class="label">Описание</span><span id="r-desc"></span></div>
     </div>
 
     <div class="btn-row">
-      <button id="btn-delete" onclick="deleteRecord()">🗑 Delete</button>
-      <button id="btn-cancel" onclick="tg.close()">Cancel</button>
+      <button id="btn-delete" onclick="deleteRecord()">🗑 Удалить</button>
+      <button id="btn-cancel" onclick="tg.close()">Отмена</button>
     </div>
   </div>
 
@@ -45,19 +45,24 @@
     let recordID = null;
 
     async function init() {
-      const res = await apiFetch("/api/expenses/latest");
+      const [res, catsRes] = await Promise.all([
+        apiFetch("/api/expenses/latest"),
+        apiFetch("/api/categories"),
+      ]);
       document.getElementById("loading").style.display = "none";
       if (!res.ok) {
-        showError("No recent record found.");
+        showError("Последняя запись не найдена.");
         return;
       }
       const data = await res.json();
+      const cats = catsRes.ok ? await catsRes.json() : [];
+      const cat = cats.find(c => c.code === data.category_code);
       recordID = data.id;
 
       document.getElementById("r-date").textContent = data.date;
       document.getElementById("r-ledger").textContent = data.ledger_name;
-      document.getElementById("r-type").textContent = data.type;
-      document.getElementById("r-category").textContent = data.category_code;
+      document.getElementById("r-type").textContent = data.type === "income" ? "Доход" : "Расход";
+      document.getElementById("r-category").textContent = cat ? cat.emoji + " " + cat.name : data.category_code;
       document.getElementById("r-amount").textContent = data.amount + " " + data.currency + " (" + data.amount_in_base.toFixed(2) + " " + data.base_currency + ")";
       document.getElementById("r-desc").textContent = data.description || "—";
       document.getElementById("content").style.display = "block";
@@ -72,7 +77,7 @@
       if (!res.ok) {
         recordID = id;
         document.getElementById("btn-delete").disabled = false;
-        showError("Failed to delete record.");
+        showError("Не удалось удалить запись.");
         return;
       }
       tg.close();

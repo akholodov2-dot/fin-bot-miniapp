@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Export</title>
+  <title>Выгрузка</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     body { font-family: sans-serif; padding: 16px; background: var(--tg-theme-bg-color, #fff); color: var(--tg-theme-text-color, #000); }
@@ -18,25 +18,25 @@
   </style>
 </head>
 <body>
-  <h2>Export to Excel</h2>
+  <h2>Выгрузка в Excel</h2>
   <div id="error"></div>
 
-  <label>Ledger</label>
+  <label>Счёт</label>
   <select id="ledger">
-    <option value="0">All Ledgers</option>
+    <option value="0">Все счета</option>
   </select>
 
-  <label>Date Range</label>
+  <label>Период</label>
   <div class="quick-btns">
-    <button onclick="setThisMonth()">This Month</button>
-    <button onclick="setThisYear()">This Year</button>
+    <button onclick="setThisMonth()">Этот месяц</button>
+    <button onclick="setThisYear()">Этот год</button>
   </div>
-  <label>Start</label>
+  <label>С</label>
   <input type="date" id="start">
-  <label>End</label>
+  <label>По</label>
   <input type="date" id="end">
 
-  <button class="primary" onclick="doExport()">Download Excel</button>
+  <button class="primary" onclick="doExport()">Выгрузить в Excel</button>
   <div id="status"></div>
 
   <script src="../static/app.js"></script>
@@ -72,13 +72,13 @@
       const ledgerID = document.getElementById("ledger").value;
       const start = document.getElementById("start").value;
       const end = document.getElementById("end").value;
-      if (!start || !end) { showError("Select a date range."); return; }
+      if (!start || !end) { showError("Выберите период."); return; }
 
-      document.getElementById("status").textContent = "Generating file...";
+      document.getElementById("status").textContent = "Формируем файл...";
       const res = await apiFetch(`/api/export?ledger_id=${ledgerID}&start=${start}&end=${end}`);
       if (!res.ok) {
         document.getElementById("status").textContent = "";
-        showError("Failed to export.");
+        showError("Не удалось выгрузить.");
         return;
       }
       tg.close();

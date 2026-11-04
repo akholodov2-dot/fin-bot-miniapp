@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Recurring Expenses</title>
+  <title>Регулярные платежи</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     * { box-sizing: border-box; }
@@ -51,54 +51,54 @@
 
   <!-- Page 1: List -->
   <div id="page-list" class="page">
-    <h2>🔁 Recurring</h2>
+    <h2>🔁 Регулярные платежи</h2>
     <div id="list"></div>
   </div>
 
   <!-- Page 2: Edit -->
   <div id="page-edit" class="page">
-    <button class="back-btn" onclick="showList()">← Back</button>
-    <h2>Edit Recurring</h2>
+    <button class="back-btn" onclick="showList()">← Назад</button>
+    <h2>Редактирование платежа</h2>
     <div id="edit-error"></div>
 
-    <label>Ledger</label>
+    <label>Счёт</label>
     <select id="edit-ledger"></select>
 
-    <label>Type</label>
+    <label>Тип</label>
     <select id="edit-type" onchange="onEditTypeChange()">
-      <option value="expense">Expense</option>
-      <option value="income">Income</option>
+      <option value="expense">Расход</option>
+      <option value="income">Доход</option>
     </select>
 
     <div id="edit-category-row">
-      <label>Category</label>
+      <label>Категория</label>
       <select id="edit-category"></select>
     </div>
 
-    <label>Currency</label>
+    <label>Валюта</label>
     <select id="edit-currency"></select>
 
-    <label>Amount</label>
+    <label>Сумма</label>
     <input type="number" id="edit-amount" min="0.01" step="0.01" placeholder="0.00">
 
-    <label>Description (optional)</label>
-    <input type="text" id="edit-description" maxlength="100" placeholder="Leave blank to skip">
+    <label>Описание (необязательно)</label>
+    <input type="text" id="edit-description" maxlength="100" placeholder="Можно оставить пустым">
 
-    <label>Frequency</label>
+    <label>Периодичность</label>
     <div class="freq-tabs">
-      <button type="button" class="freq-tab active" id="tab-weekly" onclick="setFreq('weekly')">Weekly</button>
-      <button type="button" class="freq-tab" id="tab-monthly" onclick="setFreq('monthly')">Monthly</button>
+      <button type="button" class="freq-tab active" id="tab-weekly" onclick="setFreq('weekly')">Еженедельно</button>
+      <button type="button" class="freq-tab" id="tab-monthly" onclick="setFreq('monthly')">Ежемесячно</button>
     </div>
     <input type="hidden" id="edit-frequency" value="weekly">
 
     <div class="day-picker">
-      <div class="day-grid-label" id="day-grid-label">Select days of the week</div>
+      <div class="day-grid-label" id="day-grid-label">Выберите дни недели</div>
       <div class="day-buttons weekly" id="day-buttons"></div>
     </div>
 
     <div class="btn-row">
-      <button class="btn-delete" onclick="stopRecurring()">Stop</button>
-      <button class="btn-save" id="save-btn" onclick="saveEdit()">Save</button>
+      <button class="btn-delete" onclick="stopRecurring()">Остановить</button>
+      <button class="btn-save" id="save-btn" onclick="saveEdit()">Сохранить</button>
     </div>
   </div>
 
@@ -119,7 +119,7 @@
         apiFetch('/api/currencies'),
       ]);
       if (!catsRes.ok || !ledgersRes.ok || !cursRes.ok) {
-        showError('Failed to load data.'); return;
+        showError('Не удалось загрузить данные.'); return;
       }
       cats = await catsRes.json();
       ledgers = await ledgersRes.json();
@@ -151,22 +151,22 @@
 
     async function loadList() {
       const res = await apiFetch('/api/recurring');
-      if (!res.ok) { showError('Failed to load.'); return; }
+      if (!res.ok) { showError('Не удалось загрузить.'); return; }
       const records = await res.json();
 
       const list = document.getElementById('list');
       list.innerHTML = '';
 
       if (!records || records.length === 0) {
-        list.innerHTML = '<div class="empty">No recurring expenses.<br>Use /add to create one.</div>';
+        list.innerHTML = '<div class="empty">Регулярных платежей нет.<br>Создайте платёж через /add.</div>';
         showPage('page-list');
         return;
       }
 
       records.forEach(r => {
         const freqLabel = r.frequency === 'weekly'
-          ? 'Weekly · ' + r.days.split(',').map(d => ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][+d]).join(', ')
-          : 'Monthly · day ' + r.days;
+          ? 'Еженедельно · ' + r.days.split(',').map(d => ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'][+d]).join(', ')
+          : 'Ежемесячно · числа: ' + r.days;
 
         const card = document.createElement('div');
         card.className = 'card';
@@ -174,7 +174,7 @@
           <div>
             <div class="card-amount">${r.amount.toLocaleString()} ${r.currency}</div>
             <div class="card-meta">${freqLabel}</div>
-            <div class="card-next">Next: ${r.next_trigger_at}</div>
+            <div class="card-next">Следующий: ${r.next_trigger_at}</div>
           </div>
           <span class="chevron">›</span>`;
         card.onclick = () => openEdit(r);
@@ -225,10 +225,10 @@
       container.innerHTML = '';
       container.className = 'day-buttons ' + freq;
       document.getElementById('day-grid-label').textContent =
-        freq === 'weekly' ? 'Select days of the week' : 'Select days of the month';
+        freq === 'weekly' ? 'Выберите дни недели' : 'Выберите дни месяца';
 
       const labels = freq === 'weekly'
-        ? ['Su','Mo','Tu','We','Th','Fr','Sa']
+        ? ['Вс','Пн','Вт','Ср','Чт','Пт','Сб']
         : Array.from({length: 31}, (_, i) => String(i + 1));
 
       labels.forEach((label, i) => {
@@ -251,9 +251,9 @@
     async function saveEdit() {
       document.getElementById('edit-error').style.display = 'none';
       const amount = parseFloat(document.getElementById('edit-amount').value);
-      if (!amount || amount < 0.01) { showEditError('Enter a valid amount.'); return; }
+      if (!amount || amount < 0.01) { showEditError('Введите корректную сумму.'); return; }
       const days = getSelectedDays();
-      if (!days) { showEditError('Select at least one day.'); return; }
+      if (!days) { showEditError('Выберите хотя бы один день.'); return; }
 
       const btn = document.getElementById('save-btn');
       btn.disabled = true;
@@ -273,7 +273,7 @@
       const res = await apiFetch('/api/recurring/' + currentID, { method: 'PUT', body: JSON.stringify(payload) });
       if (!res.ok) {
         const data = await res.json();
-        showEditError(data.error || 'Failed to save.');
+        showEditError(data.error || 'Не удалось сохранить.');
         btn.disabled = false;
         return;
       }
@@ -282,10 +282,10 @@
     }
 
     async function stopRecurring() {
-      tg.showConfirm('Stop this recurring expense?', async (ok) => {
+      tg.showConfirm('Остановить этот регулярный платёж?', async (ok) => {
         if (!ok) return;
         const res = await apiFetch('/api/recurring/' + currentID, { method: 'DELETE' });
-        if (!res.ok) { showEditError('Failed to stop.'); return; }
+        if (!res.ok) { showEditError('Не удалось остановить.'); return; }
         showList();
       });
     }

@@ -14,7 +14,7 @@ import (
 
 var (
 	ErrLedgerNotFound  = errors.New("ledger not found")
-	ErrLedgerCodeExists = errors.New("ledger code already exists")
+	ErrLedgerCodeExists = errors.New("счёт с таким кодом уже существует")
 )
 
 type LedgerService struct {
@@ -132,7 +132,7 @@ func (s *LedgerService) initializeDefaultLedger(userID int64) error {
 	defaultLedger := &model.Ledger{
 		UserID:    userID,
 		Code:      "default",
-		Name:      "Default",
+		Name:      "Основной",
 		Emoji:     "📒",
 		SortOrder: 1,
 		Active:    true,

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>History</title>
+  <title>История</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     * { box-sizing: border-box; }
@@ -40,70 +40,70 @@
   </style>
 </head>
 <body>
-  <div id="loading">Loading...</div>
+  <div id="loading">Загрузка...</div>
   <div id="error"></div>
 
   <!-- Page 1: Years -->
   <div id="page-years" class="page">
-    <h2>📜 History</h2>
+    <h2>📜 История</h2>
     <ul class="list" id="years-list"></ul>
   </div>
 
   <!-- Page 2: Months -->
   <div id="page-months" class="page">
-    <button class="back-btn" onclick="showYears()">← Back</button>
+    <button class="back-btn" onclick="showYears()">← Назад</button>
     <h2 id="months-title"></h2>
     <ul class="list" id="months-list"></ul>
   </div>
 
   <!-- Page 3: Records list -->
   <div id="page-records" class="page">
-    <button class="back-btn" onclick="showMonths()">← Back</button>
+    <button class="back-btn" onclick="showMonths()">← Назад</button>
     <h2 id="records-title"></h2>
     <ul class="list" id="records-list"></ul>
   </div>
 
   <!-- Page 4: Edit -->
   <div id="page-edit" class="page">
-    <button class="back-btn" onclick="showRecords()">← Back</button>
-    <h2>Edit Record</h2>
+    <button class="back-btn" onclick="showRecords()">← Назад</button>
+    <h2>Редактирование записи</h2>
     <div id="edit-error"></div>
 
-    <label>Ledger</label>
+    <label>Счёт</label>
     <select id="edit-ledger"></select>
 
-    <label>Type</label>
+    <label>Тип</label>
     <select id="edit-type" onchange="onEditTypeChange()">
-      <option value="expense">Expense</option>
-      <option value="income">Income</option>
+      <option value="expense">Расход</option>
+      <option value="income">Доход</option>
     </select>
 
     <div id="category-row">
-      <label>Category</label>
+      <label>Категория</label>
       <select id="edit-category"></select>
     </div>
 
-    <label>Currency</label>
+    <label>Валюта</label>
     <select id="edit-currency"></select>
 
-    <label>Amount</label>
+    <label>Сумма</label>
     <input type="number" id="edit-amount" min="0.01" step="0.01">
 
-    <label>Date</label>
+    <label>Дата</label>
     <input type="date" id="edit-date">
 
-    <label>Description (optional)</label>
+    <label>Описание (необязательно)</label>
     <input type="text" id="edit-description" maxlength="100">
 
     <div class="btn-row">
-      <button class="btn-delete" onclick="deleteRecord()">🗑 Delete</button>
-      <button class="btn-save" onclick="saveRecord()">Save</button>
+      <button class="btn-delete" onclick="deleteRecord()">🗑 Удалить</button>
+      <button class="btn-save" onclick="saveRecord()">Сохранить</button>
     </div>
   </div>
 
   <script src="../static/app.js"></script>
   <script>
-    const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const MONTHS = ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
 
     let currentYear = null;
     let currentMonth = null;
@@ -128,7 +128,7 @@
         apiFetch('/api/currencies'),
       ]);
       if (!catsRes.ok || !ledgersRes.ok || !cursRes.ok) {
-        showError('Failed to load data.'); return;
+        showError('Не удалось загрузить данные.'); return;
       }
       cats = await catsRes.json();
       ledgers = await ledgersRes.json();
@@ -166,7 +166,7 @@
         const data = await res.json();
         showError(data.error); return;
       }
-      if (!res.ok) { showError('Failed to load history.'); return; }
+      if (!res.ok) { showError('Не удалось загрузить историю.'); return; }
       const years = await res.json();
       const list = document.getElementById('years-list');
       years.forEach(y => {
@@ -181,7 +181,7 @@
     async function loadMonths(year) {
       currentYear = year;
       const res = await apiFetch(`/api/expenses/months?year=${year}`);
-      if (!res.ok) { showError('Failed to load months.'); return; }
+      if (!res.ok) { showError('Не удалось загрузить месяцы.'); return; }
       const months = await res.json();
       document.getElementById('months-title').textContent = year;
       const list = document.getElementById('months-list');
@@ -201,7 +201,7 @@
     async function loadRecords(year, month) {
       currentMonth = month;
       const res = await apiFetch(`/api/expenses?year=${year}&month=${month}`);
-      if (!res.ok) { showError('Failed to load records.'); return; }
+      if (!res.ok) { showError('Не удалось загрузить записи.'); return; }
       const records = await res.json();
       document.getElementById('records-title').textContent = `${MONTHS[month-1]} ${year}`;
       const list = document.getElementById('records-list');
@@ -211,7 +211,9 @@
         const sign = r.type === 'expense' ? '-' : '+';
         const cls = r.type === 'expense' ? 'expense' : 'income';
         const desc = r.description ? `<span class="badge">${r.description}</span>` : '';
-        const cat = r.category_code ? `<span class="badge">${r.category_code}</span>` : '';
+        const catInfo = cats.find(c => c.code === r.category_code);
+        const catLabel = catInfo ? catInfo.emoji + ' ' + catInfo.name : r.category_code;
+        const cat = r.category_code ? `<span class="badge">${catLabel}</span>` : '';
         li.innerHTML = `
           <div class="item-left">
             <span>${r.ledger_name} ${cat} ${desc}</span>
@@ -250,7 +252,7 @@
 
     async function saveRecord() {
       const amount = parseFloat(document.getElementById('edit-amount').value);
-      if (!amount || amount < 0.01) { showEditError('Enter a valid amount.'); return; }
+      if (!amount || amount < 0.01) { showEditError('Введите корректную сумму.'); return; }
       const type = document.getElementById('edit-type').value;
       const payload = {
         ledger_id: parseInt(document.getElementById('edit-ledger').value),
@@ -264,7 +266,7 @@
       const res = await apiFetch(`/api/expenses/${currentRecordID}`, { method: 'PUT', body: JSON.stringify(payload) });
       if (!res.ok) {
         const data = await res.json();
-        showEditError(data.error || 'Failed to save.'); return;
+        showEditError(data.error || 'Не удалось сохранить.'); return;
       }
       showRecords();
     }
@@ -277,7 +279,7 @@
       const res = await apiFetch(`/api/expenses/${id}`, { method: 'DELETE' });
       if (!res.ok) {
         currentRecordID = id;
-        showEditError('Failed to delete.');
+        showEditError('Не удалось удалить.');
       } else {
         showRecords();
       }

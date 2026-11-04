@@ -11,7 +11,7 @@ func (h *Handler) recoverMiddleware(next tele.HandlerFunc) tele.HandlerFunc {
 		defer func() {
 			if r := recover(); r != nil {
 				logger.Error("panic recovered: %v", r)
-				_ = c.Send("❌ Internal server error. Please try again later.")
+				_ = c.Send("❌ Внутренняя ошибка сервера. Попробуйте позже.")
 			}
 		}()
 		return next(c)

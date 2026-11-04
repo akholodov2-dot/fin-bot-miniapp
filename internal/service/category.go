@@ -14,7 +14,7 @@ import (
 
 var (
 	ErrCategoryNotFound  = errors.New("category not found")
-	ErrCategoryCodeExists = errors.New("category code already exists")
+	ErrCategoryCodeExists = errors.New("категория с таким кодом уже существует")
 )
 
 type CategoryService struct {
@@ -55,14 +55,14 @@ func (s *CategoryService) initializeDefaultCategories(userID int64) {
 		emoji     string
 		sortOrder int
 	}{
-		{"food", "Food", "🍔", 1},
-		{"shopping", "Shopping", "🛒", 2},
-		{"transport", "Transport", "🚇", 3},
-		{"housing", "Housing", "🏠", 4},
-		{"entertainment", "Entertainment", "🎬", 5},
-		{"medical", "Medical", "🏥", 6},
-		{"education", "Education", "📚", 7},
-		{"other", "Other", "💰", 8},
+		{"food", "Еда", "🍔", 1},
+		{"shopping", "Покупки", "🛒", 2},
+		{"transport", "Транспорт", "🚇", 3},
+		{"housing", "Жильё", "🏠", 4},
+		{"entertainment", "Развлечения", "🎬", 5},
+		{"medical", "Здоровье", "🏥", 6},
+		{"education", "Образование", "📚", 7},
+		{"other", "Другое", "💰", 8},
 	}
 
 	for _, cat := range defaultCategories {

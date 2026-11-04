@@ -54,7 +54,7 @@ func (h *handlers) GetCategories(w http.ResponseWriter, r *http.Request) {
 	cats, err := h.categoryService.GetActiveByUserID(userID)
 	if err != nil {
 		logger.Error("GetCategories user=%d: %v", userID, err)
-		jsonError(w, "failed to get categories", http.StatusInternalServerError)
+		jsonError(w, "не удалось получить категории", http.StatusInternalServerError)
 		return
 	}
 	resp := make([]CategoryResponse, 0, len(cats))
@@ -70,7 +70,7 @@ func (h *handlers) GetLedgers(w http.ResponseWriter, r *http.Request) {
 	ledgers, err := h.ledgerService.GetActiveByUserID(userID)
 	if err != nil {
 		logger.Error("GetLedgers user=%d: %v", userID, err)
-		jsonError(w, "failed to get ledgers", http.StatusInternalServerError)
+		jsonError(w, "не удалось получить счета", http.StatusInternalServerError)
 		return
 	}
 	resp := make([]LedgerResponse, 0, len(ledgers))
@@ -87,37 +87,37 @@ func (h *handlers) PostExpense(w http.ResponseWriter, r *http.Request) {
 
 	var req PostExpenseRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		jsonError(w, "invalid request body", http.StatusBadRequest)
+		jsonError(w, "некорректное тело запроса", http.StatusBadRequest)
 		return
 	}
 
 	if req.Type != constant.TypeExpense && req.Type != constant.TypeIncome {
-		jsonError(w, "type must be 'expense' or 'income'", http.StatusBadRequest)
+		jsonError(w, "тип должен быть 'expense' или 'income'", http.StatusBadRequest)
 		return
 	}
 	if req.Amount < constant.MinAmount {
-		jsonError(w, fmt.Sprintf("amount must be >= %.2f", constant.MinAmount), http.StatusBadRequest)
+		jsonError(w, fmt.Sprintf("сумма должна быть не меньше %.2f", constant.MinAmount), http.StatusBadRequest)
 		return
 	}
 	if req.LedgerID == 0 {
-		jsonError(w, "ledger_id is required", http.StatusBadRequest)
+		jsonError(w, "не указан ledger_id", http.StatusBadRequest)
 		return
 	}
 	if len(req.Description) > constant.MaxDescriptionLength {
-		jsonError(w, "description too long", http.StatusBadRequest)
+		jsonError(w, "слишком длинное описание", http.StatusBadRequest)
 		return
 	}
 
 	date, err := time.Parse("2006-01-02", req.Date)
 	if err != nil {
-		jsonError(w, "date must be YYYY-MM-DD", http.StatusBadRequest)
+		jsonError(w, "дата должна быть в формате ГГГГ-ММ-ДД", http.StatusBadRequest)
 		return
 	}
 
 	exp, err := h.expenseService.CreateExpense(userID, username, req.LedgerID, req.Type, req.Amount, req.Currency, req.CategoryCode, req.Description, date)
 	if err != nil {
 		logger.Error("PostExpense user=%d: %v", userID, err)
-		jsonError(w, "failed to save expense", http.StatusInternalServerError)
+		jsonError(w, "не удалось сохранить запись", http.StatusInternalServerError)
 		return
 	}
 
@@ -137,7 +137,7 @@ func (h *handlers) PostExpense(w http.ResponseWriter, r *http.Request) {
 		if req.Description != "" {
 			desc = " — " + req.Description
 		}
-		msg := fmt.Sprintf("%s Saved: %.2f %s (%.2f %s)%s", icon, req.Amount, req.Currency, exp.AmountInBase, h.rateService.BaseCurrency(), desc)
+		msg := fmt.Sprintf("%s Сохранено: %.2f %s (%.2f %s)%s", icon, req.Amount, req.Currency, exp.AmountInBase, h.rateService.BaseCurrency(), desc)
 		go h.notifier.NotifyUser(userID, msg)
 	}
 }
@@ -147,7 +147,7 @@ func (h *handlers) GetLatestExpense(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r)
 	exp, err := h.expenseService.GetMostRecentByUser(userID)
 	if err != nil {
-		jsonError(w, "no recent record found", http.StatusNotFound)
+		jsonError(w, "последняя запись не найдена", http.StatusNotFound)
 		return
 	}
 
@@ -184,17 +184,17 @@ func (h *handlers) DeleteExpense(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
-		jsonError(w, "invalid expense id", http.StatusBadRequest)
+		jsonError(w, "некорректный id записи", http.StatusBadRequest)
 		return
 	}
 	if err := h.expenseService.DeleteExpense(uint(id), userID); err != nil {
 		logger.Error("DeleteExpense user=%d id=%d: %v", userID, id, err)
-		jsonError(w, "failed to delete expense", http.StatusInternalServerError)
+		jsonError(w, "не удалось удалить запись", http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
 	if h.notifier != nil {
-		go h.notifier.NotifyUser(userID, "↩️ Record deleted.")
+		go h.notifier.NotifyUser(userID, "↩️ Запись удалена.")
 	}
 }
 
@@ -213,7 +213,7 @@ func (h *handlers) GetStats(w http.ResponseWriter, r *http.Request) {
 	if raw := q.Get("ledger_id"); raw != "" && raw != "0" {
 		v, err := strconv.ParseUint(raw, 10, 64)
 		if err != nil {
-			jsonError(w, "invalid ledger_id", http.StatusBadRequest)
+			jsonError(w, "некорректный ledger_id", http.StatusBadRequest)
 			return
 		}
 		ledgerID = uint(v)
@@ -222,7 +222,7 @@ func (h *handlers) GetStats(w http.ResponseWriter, r *http.Request) {
 	expenses, err := h.expenseService.GetExpensesByLedgerAndDateRange(userID, ledgerID, start, end)
 	if err != nil {
 		logger.Error("GetStats user=%d: %v", userID, err)
-		jsonError(w, "failed to get stats", http.StatusInternalServerError)
+		jsonError(w, "не удалось получить статистику", http.StatusInternalServerError)
 		return
 	}
 
@@ -253,7 +253,7 @@ func (h *handlers) GetExport(w http.ResponseWriter, r *http.Request) {
 	if raw := q.Get("ledger_id"); raw != "" && raw != "0" {
 		v, err := strconv.ParseUint(raw, 10, 64)
 		if err != nil {
-			jsonError(w, "invalid ledger_id", http.StatusBadRequest)
+			jsonError(w, "некорректный ledger_id", http.StatusBadRequest)
 			return
 		}
 		ledgerID = uint(v)
@@ -262,7 +262,7 @@ func (h *handlers) GetExport(w http.ResponseWriter, r *http.Request) {
 	expenses, err := h.expenseService.GetExpensesByLedgerAndDateRange(userID, ledgerID, start, end)
 	if err != nil {
 		logger.Error("GetExport user=%d: %v", userID, err)
-		jsonError(w, "failed to get records", http.StatusInternalServerError)
+		jsonError(w, "не удалось получить записи", http.StatusInternalServerError)
 		return
 	}
 
@@ -275,10 +275,19 @@ func (h *handlers) GetExport(w http.ResponseWriter, r *http.Request) {
 		ledgerName[l.ID] = l.Emoji + " " + l.Name
 	}
 
-	buf, err := buildExcel(expenses, ledgerName, h.rateService.BaseCurrency())
+	categories, err := h.categoryService.GetActiveByUserID(userID)
+	if err != nil {
+		logger.Error("GetExport categories user=%d: %v", userID, err)
+	}
+	categoryName := make(map[string]string, len(categories))
+	for _, c := range categories {
+		categoryName[c.Code] = c.Emoji + " " + c.Name
+	}
+
+	buf, err := buildExcel(expenses, ledgerName, categoryName, h.rateService.BaseCurrency())
 	if err != nil {
 		logger.Error("GetExport build excel user=%d: %v", userID, err)
-		jsonError(w, "failed to generate file", http.StatusInternalServerError)
+		jsonError(w, "не удалось сформировать файл", http.StatusInternalServerError)
 		return
 	}
 
@@ -286,7 +295,7 @@ func (h *handlers) GetExport(w http.ResponseWriter, r *http.Request) {
 	jsonOK(w, map[string]string{"status": "ok"})
 
 	if h.notifier != nil {
-		caption := fmt.Sprintf("📊 Export: %s to %s (%d records)", start.Format("2006-01-02"), end.Format("2006-01-02"), len(expenses))
+		caption := fmt.Sprintf("📊 Выгрузка: %s — %s (записей: %d)", start.Format("2006-01-02"), end.Format("2006-01-02"), len(expenses))
 		go h.notifier.SendFileToUser(userID, filename, buf, caption)
 	}
 }
@@ -297,11 +306,11 @@ func (h *handlers) GetExpenseYears(w http.ResponseWriter, r *http.Request) {
 	years, err := h.expenseService.GetYears(userID)
 	if err != nil {
 		logger.Error("GetExpenseYears user=%d: %v", userID, err)
-		jsonError(w, "failed to get years", http.StatusInternalServerError)
+		jsonError(w, "не удалось получить список лет", http.StatusInternalServerError)
 		return
 	}
 	if len(years) == 0 {
-		jsonError(w, "No records yet. Start by adding your first record with /add.", http.StatusNotFound)
+		jsonError(w, "Записей пока нет. Добавьте первую через /add.", http.StatusNotFound)
 		return
 	}
 	jsonOK(w, years)
@@ -312,13 +321,13 @@ func (h *handlers) GetExpenseMonths(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r)
 	year, err := strconv.Atoi(r.URL.Query().Get("year"))
 	if err != nil {
-		jsonError(w, "invalid year", http.StatusBadRequest)
+		jsonError(w, "некорректный год", http.StatusBadRequest)
 		return
 	}
 	months, err := h.expenseService.GetMonths(userID, year)
 	if err != nil {
 		logger.Error("GetExpenseMonths user=%d: %v", userID, err)
-		jsonError(w, "failed to get months", http.StatusInternalServerError)
+		jsonError(w, "не удалось получить список месяцев", http.StatusInternalServerError)
 		return
 	}
 	jsonOK(w, months)
@@ -330,18 +339,18 @@ func (h *handlers) GetExpenses(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	year, err := strconv.Atoi(q.Get("year"))
 	if err != nil {
-		jsonError(w, "invalid year", http.StatusBadRequest)
+		jsonError(w, "некорректный год", http.StatusBadRequest)
 		return
 	}
 	month, err := strconv.Atoi(q.Get("month"))
 	if err != nil {
-		jsonError(w, "invalid month", http.StatusBadRequest)
+		jsonError(w, "некорректный месяц", http.StatusBadRequest)
 		return
 	}
 	expenses, err := h.expenseService.GetByYearMonth(userID, year, month)
 	if err != nil {
 		logger.Error("GetExpenses user=%d: %v", userID, err)
-		jsonError(w, "failed to get expenses", http.StatusInternalServerError)
+		jsonError(w, "не удалось получить записи", http.StatusInternalServerError)
 		return
 	}
 
@@ -378,29 +387,29 @@ func (h *handlers) PutExpense(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r)
 	id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
 	if err != nil {
-		jsonError(w, "invalid expense id", http.StatusBadRequest)
+		jsonError(w, "некорректный id записи", http.StatusBadRequest)
 		return
 	}
 
 	var req PostExpenseRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		jsonError(w, "invalid request body", http.StatusBadRequest)
+		jsonError(w, "некорректное тело запроса", http.StatusBadRequest)
 		return
 	}
 	if req.Amount < constant.MinAmount {
-		jsonError(w, fmt.Sprintf("amount must be >= %.2f", constant.MinAmount), http.StatusBadRequest)
+		jsonError(w, fmt.Sprintf("сумма должна быть не меньше %.2f", constant.MinAmount), http.StatusBadRequest)
 		return
 	}
 	date, err := time.Parse("2006-01-02", req.Date)
 	if err != nil {
-		jsonError(w, "date must be YYYY-MM-DD", http.StatusBadRequest)
+		jsonError(w, "дата должна быть в формате ГГГГ-ММ-ДД", http.StatusBadRequest)
 		return
 	}
 
 	exp, err := h.expenseService.UpdateExpense(userID, uint(id), req.LedgerID, req.Type, req.Currency, req.CategoryCode, req.Description, req.Amount, date)
 	if err != nil {
 		logger.Error("PutExpense user=%d id=%d: %v", userID, id, err)
-		jsonError(w, "failed to update expense", http.StatusInternalServerError)
+		jsonError(w, "не удалось обновить запись", http.StatusInternalServerError)
 		return
 	}
 	jsonOK(w, PostExpenseResponse{
@@ -417,28 +426,28 @@ func (h *handlers) PostRecurring(w http.ResponseWriter, r *http.Request) {
 
 	var req PostRecurringRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		jsonError(w, "invalid request body", http.StatusBadRequest)
+		jsonError(w, "некорректное тело запроса", http.StatusBadRequest)
 		return
 	}
 
 	if req.Type != constant.TypeExpense && req.Type != constant.TypeIncome {
-		jsonError(w, "type must be 'expense' or 'income'", http.StatusBadRequest)
+		jsonError(w, "тип должен быть 'expense' или 'income'", http.StatusBadRequest)
 		return
 	}
 	if req.Amount < constant.MinAmount {
-		jsonError(w, fmt.Sprintf("amount must be >= %.2f", constant.MinAmount), http.StatusBadRequest)
+		jsonError(w, fmt.Sprintf("сумма должна быть не меньше %.2f", constant.MinAmount), http.StatusBadRequest)
 		return
 	}
 	if req.LedgerID == 0 {
-		jsonError(w, "ledger_id is required", http.StatusBadRequest)
+		jsonError(w, "не указан ledger_id", http.StatusBadRequest)
 		return
 	}
 	if req.Frequency != "weekly" && req.Frequency != "monthly" {
-		jsonError(w, "frequency must be 'weekly' or 'monthly'", http.StatusBadRequest)
+		jsonError(w, "периодичность должна быть 'weekly' или 'monthly'", http.StatusBadRequest)
 		return
 	}
 	if req.Days == "" {
-		jsonError(w, "days is required", http.StatusBadRequest)
+		jsonError(w, "не указаны дни", http.StatusBadRequest)
 		return
 	}
 	initialDate, err := time.Parse("2006-01-02", req.Date)
@@ -461,7 +470,7 @@ func (h *handlers) PostRecurring(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.recurringService.Create(rec, initialDate); err != nil {
 		logger.Error("PostRecurring user=%d: %v", userID, err)
-		jsonError(w, "failed to save recurring expense", http.StatusInternalServerError)
+		jsonError(w, "не удалось сохранить регулярный платёж", http.StatusInternalServerError)
 		return
 	}
 
@@ -473,8 +482,12 @@ func (h *handlers) PostRecurring(w http.ResponseWriter, r *http.Request) {
 		if req.Type == constant.TypeIncome {
 			icon = "💰"
 		}
-		msg := fmt.Sprintf("%s Recurring set: %.2f %s every %s (days: %s)\nFirst record saved today. Next: %s",
-			icon, req.Amount, req.Currency, req.Frequency, req.Days, rec.NextTriggerAt.Format("2006-01-02"))
+		frequency := "еженедельно"
+		if req.Frequency == "monthly" {
+			frequency = "ежемесячно"
+		}
+		msg := fmt.Sprintf("%s Регулярный платёж создан: %.2f %s %s (дни: %s)\nПервая запись сохранена сегодня. Следующая: %s",
+			icon, req.Amount, req.Currency, frequency, req.Days, rec.NextTriggerAt.Format("2006-01-02"))
 		go h.notifier.NotifyUser(userID, msg)
 	}
 }
@@ -485,7 +498,7 @@ func (h *handlers) GetRecurring(w http.ResponseWriter, r *http.Request) {
 	records, err := h.recurringService.GetActiveByUserID(userID)
 	if err != nil {
 		logger.Error("GetRecurring user=%d: %v", userID, err)
-		jsonError(w, "failed to get recurring expenses", http.StatusInternalServerError)
+		jsonError(w, "не удалось получить регулярные платежи", http.StatusInternalServerError)
 		return
 	}
 	resp := make([]RecurringResponse, 0, len(records))
@@ -511,29 +524,29 @@ func (h *handlers) PutRecurring(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r)
 	id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
 	if err != nil {
-		jsonError(w, "invalid id", http.StatusBadRequest)
+		jsonError(w, "некорректный id", http.StatusBadRequest)
 		return
 	}
 
 	var req PutRecurringRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		jsonError(w, "invalid request body", http.StatusBadRequest)
+		jsonError(w, "некорректное тело запроса", http.StatusBadRequest)
 		return
 	}
 	if req.Type != constant.TypeExpense && req.Type != constant.TypeIncome {
-		jsonError(w, "type must be 'expense' or 'income'", http.StatusBadRequest)
+		jsonError(w, "тип должен быть 'expense' или 'income'", http.StatusBadRequest)
 		return
 	}
 	if req.Amount < constant.MinAmount {
-		jsonError(w, fmt.Sprintf("amount must be >= %.2f", constant.MinAmount), http.StatusBadRequest)
+		jsonError(w, fmt.Sprintf("сумма должна быть не меньше %.2f", constant.MinAmount), http.StatusBadRequest)
 		return
 	}
 	if req.Frequency != "weekly" && req.Frequency != "monthly" {
-		jsonError(w, "frequency must be 'weekly' or 'monthly'", http.StatusBadRequest)
+		jsonError(w, "периодичность должна быть 'weekly' или 'monthly'", http.StatusBadRequest)
 		return
 	}
 	if req.Days == "" {
-		jsonError(w, "days is required", http.StatusBadRequest)
+		jsonError(w, "не указаны дни", http.StatusBadRequest)
 		return
 	}
 
@@ -549,7 +562,7 @@ func (h *handlers) PutRecurring(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := h.recurringService.Update(userID, uint(id), rec); err != nil {
 		logger.Error("PutRecurring user=%d id=%d: %v", userID, id, err)
-		jsonError(w, "failed to update recurring expense", http.StatusInternalServerError)
+		jsonError(w, "не удалось обновить регулярный платёж", http.StatusInternalServerError)
 		return
 	}
 	jsonOK(w, map[string]any{"id": id, "next_trigger_at": rec.NextTriggerAt.Format("2006-01-02")})
@@ -560,12 +573,12 @@ func (h *handlers) DeleteRecurring(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r)
 	id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
 	if err != nil {
-		jsonError(w, "invalid id", http.StatusBadRequest)
+		jsonError(w, "некорректный id", http.StatusBadRequest)
 		return
 	}
 	if err := h.recurringService.Deactivate(uint(id), userID); err != nil {
 		logger.Error("DeleteRecurring user=%d id=%d: %v", userID, id, err)
-		jsonError(w, "failed to delete recurring expense", http.StatusInternalServerError)
+		jsonError(w, "не удалось удалить регулярный платёж", http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -574,11 +587,11 @@ func (h *handlers) DeleteRecurring(w http.ResponseWriter, r *http.Request) {
 func parseDateRange(startStr, endStr string) (time.Time, time.Time, error) {
 	start, err := time.Parse("2006-01-02", startStr)
 	if err != nil {
-		return time.Time{}, time.Time{}, fmt.Errorf("start must be YYYY-MM-DD")
+		return time.Time{}, time.Time{}, fmt.Errorf("start должен быть в формате ГГГГ-ММ-ДД")
 	}
 	end, err := time.Parse("2006-01-02", endStr)
 	if err != nil {
-		return time.Time{}, time.Time{}, fmt.Errorf("end must be YYYY-MM-DD")
+		return time.Time{}, time.Time{}, fmt.Errorf("end должен быть в формате ГГГГ-ММ-ДД")
 	}
 	end = end.Add(24*time.Hour - time.Second)
 	return start, end, nil
@@ -617,13 +630,13 @@ func buildStats(expenses []*model.Expense, start, end time.Time, baseCurrency st
 		}
 		name := ledgerName[id]
 		if name == "" {
-			name = "Unknown"
+			name = "Неизвестно"
 		}
 		ledgerItems = append(ledgerItems, StatsLedgerItem{LedgerName: name, Amount: amount, Percentage: pct})
 	}
 
 	return StatsResponse{
-		Period:       start.Format("2006-01-02") + " to " + end.Format("2006-01-02"),
+		Period:       start.Format("2006-01-02") + " — " + end.Format("2006-01-02"),
 		BaseCurrency: baseCurrency,
 		TotalIncome:  totalIncome,
 		TotalExpense: totalExpense,
@@ -633,23 +646,31 @@ func buildStats(expenses []*model.Expense, start, end time.Time, baseCurrency st
 	}
 }
 
-func buildExcel(expenses []*model.Expense, ledgerName map[uint]string, baseCurrency string) ([]byte, error) {
+func buildExcel(expenses []*model.Expense, ledgerName map[uint]string, categoryName map[string]string, baseCurrency string) ([]byte, error) {
 	xlsx := excelize.NewFile()
-	sheet := "Records"
+	sheet := "Записи"
 	xlsx.SetSheetName("Sheet1", sheet)
 
-	headers := []string{"Date", "Username", "Ledger", "Type", "Category", "Amount", "Currency", "Amount(" + baseCurrency + ")", "Description"}
+	headers := []string{"Дата", "Пользователь", "Счёт", "Тип", "Категория", "Сумма", "Валюта", "Сумма (" + baseCurrency + ")", "Описание"}
 	for i, h := range headers {
 		xlsx.SetCellValue(sheet, fmt.Sprintf("%c1", 'A'+i), h)
 	}
 
 	for i, exp := range expenses {
 		row := i + 2
+		typeName := "Расход"
+		if exp.Type == constant.TypeIncome {
+			typeName = "Доход"
+		}
+		category, ok := categoryName[exp.Category]
+		if !ok {
+			category = exp.Category
+		}
 		xlsx.SetCellValue(sheet, fmt.Sprintf("A%d", row), exp.ExpenseDate.Format("2006-01-02"))
 		xlsx.SetCellValue(sheet, fmt.Sprintf("B%d", row), exp.Username)
 		xlsx.SetCellValue(sheet, fmt.Sprintf("C%d", row), ledgerName[exp.LedgerID])
-		xlsx.SetCellValue(sheet, fmt.Sprintf("D%d", row), exp.Type)
-		xlsx.SetCellValue(sheet, fmt.Sprintf("E%d", row), exp.Category)
+		xlsx.SetCellValue(sheet, fmt.Sprintf("D%d", row), typeName)
+		xlsx.SetCellValue(sheet, fmt.Sprintf("E%d", row), category)
 		xlsx.SetCellValue(sheet, fmt.Sprintf("F%d", row), exp.Amount)
 		xlsx.SetCellValue(sheet, fmt.Sprintf("G%d", row), exp.Currency)
 		xlsx.SetCellValue(sheet, fmt.Sprintf("H%d", row), exp.AmountInBase)

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Add Record</title>
+  <title>Новая запись</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     body { font-family: sans-serif; padding: 16px; background: var(--tg-theme-bg-color, #fff); color: var(--tg-theme-text-color, #000); }
@@ -29,53 +29,53 @@
   </style>
 </head>
 <body>
-  <h2>Add Record</h2>
+  <h2>Новая запись</h2>
   <div id="error"></div>
 
-  <label>Ledger</label>
+  <label>Счёт</label>
   <select id="ledger"></select>
 
-  <label>Type</label>
+  <label>Тип</label>
   <select id="type" onchange="onTypeChange()">
-    <option value="expense">Expense</option>
-    <option value="income">Income</option>
+    <option value="expense">Расход</option>
+    <option value="income">Доход</option>
   </select>
 
   <div id="category-row">
-    <label>Category</label>
+    <label>Категория</label>
     <select id="category"></select>
   </div>
 
-  <label>Currency</label>
+  <label>Валюта</label>
   <select id="currency"></select>
 
-  <label>Amount</label>
+  <label>Сумма</label>
   <input type="number" id="amount" min="0.01" step="0.01" placeholder="0.00">
 
-  <label>Date</label>
+  <label>Дата</label>
   <input type="date" id="date">
 
-  <label>Description (optional)</label>
-  <input type="text" id="description" maxlength="100" placeholder="Leave blank to skip">
+  <label>Описание (необязательно)</label>
+  <input type="text" id="description" maxlength="100" placeholder="Можно оставить пустым">
 
   <div class="toggle-row">
-    <span>Recurring</span>
+    <span>Повторять</span>
     <input type="checkbox" id="recurring-toggle" onchange="onRecurringToggle()">
   </div>
 
   <div id="recurring-section">
-    <label>Frequency</label>
+    <label>Периодичность</label>
     <div class="freq-tabs">
-      <button type="button" class="freq-tab active" id="tab-weekly" onclick="setFreq('weekly')">Weekly</button>
-      <button type="button" class="freq-tab" id="tab-monthly" onclick="setFreq('monthly')">Monthly</button>
+      <button type="button" class="freq-tab active" id="tab-weekly" onclick="setFreq('weekly')">Еженедельно</button>
+      <button type="button" class="freq-tab" id="tab-monthly" onclick="setFreq('monthly')">Ежемесячно</button>
     </div>
     <input type="hidden" id="frequency" value="weekly">
 
-    <div class="day-grid-label" id="day-grid-label">Select days of the week</div>
+    <div class="day-grid-label" id="day-grid-label">Выберите дни недели</div>
     <div class="day-buttons weekly" id="day-buttons"></div>
   </div>
 
-  <button id="save-btn" onclick="submit()">Save</button>
+  <button id="save-btn" onclick="submit()">Сохранить</button>
 
   <script src="../static/app.js"></script>
   <script>
@@ -87,7 +87,7 @@
       ]);
 
       if (!catsRes.ok || !ledgersRes.ok || !cursRes.ok) {
-        showError("Failed to load data. Please try again.");
+        showError("Не удалось загрузить данные. Попробуйте ещё раз.");
         return;
       }
 
@@ -148,10 +148,10 @@
       container.className = "day-buttons " + freq;
 
       document.getElementById("day-grid-label").textContent =
-        freq === "weekly" ? "Select days of the week" : "Select days of the month";
+        freq === "weekly" ? "Выберите дни недели" : "Выберите дни месяца";
 
       const labels = freq === "weekly"
-        ? ["Su","Mo","Tu","We","Th","Fr","Sa"]
+        ? ["Вс","Пн","Вт","Ср","Чт","Пт","Сб"]
         : Array.from({length: 31}, (_, i) => String(i + 1));
 
       labels.forEach((label, i) => {
@@ -175,7 +175,7 @@
     async function submit() {
       hideError();
       const amount = parseFloat(document.getElementById("amount").value);
-      if (!amount || amount < 0.01) { showError("Enter a valid amount."); return; }
+      if (!amount || amount < 0.01) { showError("Введите корректную сумму."); return; }
 
       const type = document.getElementById("type").value;
       const isRecurring = document.getElementById("recurring-toggle").checked;
@@ -185,7 +185,7 @@
 
       if (isRecurring) {
         const days = getSelectedDays();
-        if (!days) { showError("Select at least one day."); btn.disabled = false; return; }
+        if (!days) { showError("Выберите хотя бы один день."); btn.disabled = false; return; }
 
         const payload = {
           ledger_id: parseInt(document.getElementById("ledger").value),
@@ -202,7 +202,7 @@
         const res = await apiFetch("/api/recurring", { method: "POST", body: JSON.stringify(payload) });
         if (!res.ok) {
           const data = await res.json();
-          showError(data.error || "Failed to save.");
+          showError(data.error || "Не удалось сохранить.");
           btn.disabled = false;
           return;
         }
@@ -222,7 +222,7 @@
         const res = await apiFetch("/api/expenses", { method: "POST", body: JSON.stringify(payload) });
         if (!res.ok) {
           const data = await res.json();
-          showError(data.error || "Failed to save.");
+          showError(data.error || "Не удалось сохранить.");
           btn.disabled = false;
           return;
         }
